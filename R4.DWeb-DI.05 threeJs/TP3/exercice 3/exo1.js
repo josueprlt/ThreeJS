@@ -5,29 +5,6 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// Geometry model3D JS
-const loader = new GLTFLoader();
-
-let fuse = null;
-
-loader.load('rocketship/Rocketship.glb', function (glb) {
-
-  fuse = glb.scene;
-
-  scene.add(fuse);
-  fuse.traverse(function (node) {
-
-    if (node.isMesh) {
-      node.castShadow = true;
-    }
-  })
-
-}, undefined, function (error) {
-
-  console.error(error);
-
-});
-
 
 
 // Pour créer l’affichage en haut à droite
@@ -55,7 +32,7 @@ scene.background = new THREE.CubeTextureLoader()
 
 
 // Geometry plane JS
-const planeGeometry = new THREE.PlaneGeometry(25, 25, 32, 32);
+const planeGeometry = new THREE.PlaneGeometry(30, 30, 32, 32);
 const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff })
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.receiveShadow = true;
@@ -112,29 +89,29 @@ window.addEventListener('resize', () => {
 //helper
 scene.add(new THREE.DirectionalLightHelper(light));
 
-
-let speed = 0;
-let click = 0;
+let counter = 0;
+let x = 15;
+let y = 9;
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 let loop = () => {
 
-  // pour savoir si l'item est chargé ou non
-  if (scene.children[3] != undefined) {
+  while (counter < 70) {
+    const cubeGeometry = new THREE.BoxGeometry(1, Math.floor(Math.random() * (10 - 3)) + 3, 1);
+    const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 })
+    const box = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    box.receiveShadow = true;
+    box.castShadow = true;
 
-    let fuse = scene.children[3];
-    console.log(click);
+    if (x <= -10) {
+      y-=2;
+      x = 15;
+    }
+    box.position.set(x-=4, 5, y); 
+    scene.add(box);
 
-    if (click > 0) {
-      fuse.position.set(0, speed += 0.1, 0);  
-    }
-    
-    if (fuse.position.y >= 15) {
-      fuse.position.set(0, 0, 0);
-      click = 0;
-      speed = 0;
-    }
+    counter++;
   }
     
   controls.update();
@@ -142,45 +119,5 @@ let loop = () => {
   renderer.render(scene, camera);
   window.requestAnimationFrame(loop);
 }
-
-
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-
-function onMouseDown( event ) {
-  
-  // calculate pointer position in normalized device coordinates
-	// (-1 to +1) for both components
-  
-	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-  
-  render();
-}
-
-function render() {
-  
-	// update the picking ray with the camera and pointer position
-	raycaster.setFromCamera( pointer, camera );
-  
-	// calculate objects intersecting the picking ray
-	const intersects = raycaster.intersectObjects( scene.children );
-  
-	for ( let i = 0; i < intersects.length; i ++ ) {
-    
-    /* console.log(intersects[i].object); */
-    
-    if (intersects[i].object.name == "Rocket_Ship_Circle003_1") {
-      click++;
-    }
-  }
-
-	renderer.render( scene, camera );
-
-}
-
-window.addEventListener( 'mousedown', onMouseDown );
-window.requestAnimationFrame(render);
-
 
 loop();
