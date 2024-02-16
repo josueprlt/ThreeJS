@@ -6,7 +6,6 @@ import Stats from 'three/addons/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
-
 // Pour créer l’affichage en haut à droite
 const container = document.getElementById('container');
 const stats = new Stats();
@@ -18,18 +17,52 @@ stats.update();
 // Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.CubeTextureLoader()
-  .setPath('Maskonaive/')
-  .load([
-    'posx.jpg',
-    'negx.jpg',
-    'posy.jpg',
-    'negy.jpg',
-    'posz.jpg',
-    'negz.jpg'
-  ]);
+.setPath('Maskonaive/')
+.load([
+  'posx.jpg',
+  'negx.jpg',
+  'posy.jpg',
+  'negy.jpg',
+  'posz.jpg',
+  'negz.jpg'
+]);
 
+const object = [];
+scene.add(object);
 
+// Geometry Cylinder JS
+const CylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5, 32); //1.5, 1.5, 30, 32
+const CylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 })
+const cylinder = new THREE.Mesh(CylinderGeometry, CylinderMaterial);
+const cylinder1 = new THREE.Mesh(CylinderGeometry, CylinderMaterial);
+cylinder.receiveShadow = true;
+cylinder.rotation.set(Math.PI * 0.5, 0, Math.PI * 0.5);
+cylinder.position.set(0, 10, 0);
+cylinder.scale.set(2, 8, 2);
+scene.add(cylinder);
+object.push(cylinder);
 
+cylinder1.rotation.set(0, 0, 0);
+cylinder1.position.set(0, 2, 0);
+boule.rotateOnAxis(50, 0);
+boule.add(cylinder1);
+object.push(cylinder1);
+
+// Geometry Sphere JS
+const SphereGeometry = new THREE.SphereGeometry(2, 32, 32);
+const SphereMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 })
+const sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
+sphere.receiveShadow = true;
+sphere.position.set(0, 6, 0);
+boule.add(sphere);
+object.push(sphere);
+
+/* for (let i = 1; i < 9; i++) {
+  const boule = new THREE.Object3D();
+  boule.position.set(-12, 10, 0);
+  scene.add(boule);
+  object.push(boule);
+} */
 
 // Geometry plane JS
 const planeGeometry = new THREE.PlaneGeometry(30, 30, 32, 32);
@@ -89,37 +122,17 @@ window.addEventListener('resize', () => {
 //helper
 scene.add(new THREE.DirectionalLightHelper(light));
 
-let counter = 0;
-let x = 15;
-let y = 9;
+let go = false;
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 
 let loop = () => {
-  while (counter < 70) {
-    const cubeGeometry = new THREE.BoxGeometry(1, Math.floor(Math.random() * (7 - 3)) + 3, 1);
-    const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
-    const box = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    box.receiveShadow = true;
-    box.castShadow = true;
+  const speed = 0.005; // Vitesse de rotation
+  const angle = Math.sin(Date.now() * speed) * Math.PI / 2; // Angle de rotation en fonction du temps
+  
+  boule.rotation.set(angle - Math.PI, 0, 0);
 
-    var group = new THREE.Group();
-    group.add(box);
-
-    // Calcul de la position pour aligner sur le bas
-    if (x <= -10) {
-      y -= 2;
-      x = 15;
-    }
-    box.position.set(x -= 4, 0, y); // Positionnement initial
-    box.position.y += cubeGeometry.parameters.height / 2 + 2; // Alignement sur le bas
-
-    scene.add(group);
-
-    counter++;
-  }
-    
   controls.update();
   stats.update();
   renderer.render(scene, camera);
@@ -127,3 +140,9 @@ let loop = () => {
 }
 
 loop();
+
+function activeKey() {
+  go = true;
+}
+
+document.body.addEventListener("keydown", activeKey);
