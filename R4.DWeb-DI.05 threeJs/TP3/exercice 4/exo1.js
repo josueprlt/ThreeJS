@@ -44,8 +44,8 @@ object.push(cylinder);
 
 cylinder1.rotation.set(0, 0, 0);
 cylinder1.position.set(0, 2, 0);
-boule.rotateOnAxis(50, 0);
-boule.add(cylinder1);
+/* boule.rotateOnAxis(50, 0);
+boule.add(cylinder1); */
 object.push(cylinder1);
 
 // Geometry Sphere JS
@@ -54,7 +54,7 @@ const SphereMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 })
 const sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
 sphere.receiveShadow = true;
 sphere.position.set(0, 6, 0);
-boule.add(sphere);
+/* boule.add(sphere); */
 object.push(sphere);
 
 /* for (let i = 1; i < 9; i++) {
@@ -131,7 +131,7 @@ let loop = () => {
   const speed = 0.005; // Vitesse de rotation
   const angle = Math.sin(Date.now() * speed) * Math.PI / 2; // Angle de rotation en fonction du temps
   
-  boule.rotation.set(angle - Math.PI, 0, 0);
+  /* boule.rotation.set(angle - Math.PI, 0, 0); */
 
   controls.update();
   stats.update();
