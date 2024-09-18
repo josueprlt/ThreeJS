@@ -108,28 +108,32 @@ light.shadow.camera.far = 500;
 light.position.set(5, 5, 5);
 
 // Figure
-class Figure {
+class Figure extends THREE.Group {
     constructor() {
-
+        super();
         this.params = {
             x: 0,
             y: 0,
             z: 0,
-            ry: 0,
-            armRotation: 0,
-            legRotation: 0
+            ry: 0
         };
 
+        console.log(this.params.x + ' ' + this.params.z + ' ' + this.params.ry);
+
         clock = new THREE.Clock();
+
+        this.position.x = this.params.x;
+        this.position.y = this.params.y;
+        this.position.z = this.params.z;
+
+        let self = this;
 
         const loader = new GLTFLoader();
         loader.load('./RobotExpressive.glb', function (gltf) {
 
-            model = gltf.scene;
-            scene.add(model);
-            model.position.set(figure.params.x, figure.params.y, figure.params.z);
+            self.add(gltf.scene);
 
-            createGUI(model, gltf.animations);
+            self.loadAnimation(gltf.scene, gltf.animations);
 
         }, undefined, function (e) {
 
@@ -137,123 +141,59 @@ class Figure {
 
         });
     }
-}
 
-function createGUI(model, animations) {
+    update(dt) {
+        if (this.mixer) this.mixer.update(dt);
+        this.position.set(this.params.x, this.params.y, this.params.z);
+        this.rotation.set(0, this.params.ry, 0);
+    }
 
-    const states = ['Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing'];
-    const emotes = ['Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp'];
+    loadAnimation(model, animations) {
 
-    gui = new GUI();
+        const states = ['Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing'];
+        const emotes = ['Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp'];
 
-    mixer = new THREE.AnimationMixer(model);
 
-    actions = {};
+        this.mixer = new THREE.AnimationMixer(model);
 
-    for (let i = 0; i < animations.length; i++) {
+        this.actions = {};
 
-        const clip = animations[i];
-        const action = mixer.clipAction(clip);
-        actions[clip.name] = action;
+        for (let i = 0; i < animations.length; i++) {
 
-        if (emotes.indexOf(clip.name) >= 0 || states.indexOf(clip.name) >= 4) {
+            const clip = animations[i];
+            const action = this.mixer.clipAction(clip);
+            this.actions[clip.name] = action;
 
-            action.clampWhenFinished = true;
-            action.loop = THREE.LoopOnce;
+            if (emotes.indexOf(clip.name) >= 0 || states.indexOf(clip.name) >= 4) {
+
+                action.clampWhenFinished = true;
+                action.loop = THREE.LoopOnce;
+
+            }
 
         }
 
+        this.state =  "Idle";
+        this.actions[this.state].play();
     }
 
-    // states
+    fadeToAction(animationName, fadeDuration) {
 
-    const statesFolder = gui.addFolder('States');
+        if (!this.actions) return;
 
-    const clipCtrl = statesFolder.add(api, 'state').options(states);
+        if (animationName === this.state) return;
 
-    clipCtrl.onChange(function () {
+        this.actions[this.state].fadeOut(fadeDuration);
+        this.actions[animationName].reset()
+                                   .fadeIn(fadeDuration)
+                                   .play();
 
-        fadeToAction(api.state, 0.5);
-
-    });
-
-    statesFolder.open();
-
-    // emotes
-
-    const emoteFolder = gui.addFolder('Emotes');
-
-    function createEmoteCallback(name) {
-
-        api[name] = function () {
-
-            fadeToAction(name, 0.2);
-
-            mixer.addEventListener('finished', restoreState);
-
-        };
-
-        emoteFolder.add(api, name);
-
+        this.state = animationName;
     }
-
-    function restoreState() {
-
-        mixer.removeEventListener('finished', restoreState);
-
-        fadeToAction(api.state, 0.2);
-
-    }
-
-    for (let i = 0; i < emotes.length; i++) {
-
-        createEmoteCallback(emotes[i]);
-
-    }
-
-    emoteFolder.open();
-
-    // expressions
-
-    face = model.getObjectByName('Head_4');
-
-    const expressions = Object.keys(face.morphTargetDictionary);
-    const expressionFolder = gui.addFolder('Expressions');
-
-    for (let i = 0; i < expressions.length; i++) {
-
-        expressionFolder.add(face.morphTargetInfluences, i, 0, 1, 0.01).name(expressions[i]);
-
-    }
-
-    activeAction = actions['Idle'];
-    activeAction.play();
-
-    expressionFolder.open();
-
-}
-
-function fadeToAction(name, duration) {
-
-    previousAction = activeAction;
-    activeAction = actions[name];
-
-    if (previousAction !== activeAction) {
-
-        previousAction.fadeOut(duration);
-
-    }
-
-    activeAction
-        .reset()
-        .setEffectiveTimeScale(1)
-        .setEffectiveWeight(1)
-        .fadeIn(duration)
-        .play();
-
 }
 
 const figure = new Figure();
+scene.add(figure);
 
 // Helpers
 let DirectionalLightHelper = new THREE.DirectionalLightHelper(light);
@@ -266,32 +206,13 @@ scene.add(GridHelper);
 scene.add(axesHelper);
 scene.add(shadowHelper);
 
-// GSAP Animation
-/* gsap.set(figure.params, {
-    y: 1.35
-});
-
-gsap.to(figure.params, {
-    ry: degreesToRadians(360),
-    repeat: -1,
-    duration: 20
-});
-
-gsap.to(figure.params, {
-    y: 3,
-    armRotation: degreesToRadians(90),
-    repeat: -1,
-    yoyo: true,
-    duration: 0.5
-}); */
-
 
 var isAnimating = false;
 var isAnimatingWalk = false;
 var ry = 0;
 var x = 0;
 var z = 0;
-var walkSpeed = 0.1;
+var walkSpeed = 0.2;
 
 
 let keySpaceIsDown = false;
@@ -300,6 +221,7 @@ let keyDIsDown = false;
 let keyWIsDown = false;
 let keySIsDown = false;
 let keyEIsDown = false;
+let keyQIsDown = false;
 
 window.addEventListener("keyup", (event) => {
 
@@ -325,6 +247,10 @@ window.addEventListener("keyup", (event) => {
 
     if (event.code === 'KeyE') {
         keyEIsDown = false;
+    }
+
+    if (event.code === 'KeyQ') {
+        keyQIsDown = false;
     }
 })
 
@@ -353,53 +279,66 @@ window.addEventListener("keydown", (event) => {
     if (event.code === 'KeyE') {
         keyEIsDown = true;
     }
+
+    if (event.code === 'KeyQ') {
+        keyQIsDown = true;
+    }
 })
 
 
 gsap.ticker.add(() => {
 
     if (keySpaceIsDown && !isAnimating) {
-        isAnimating = true;
-        tl2.pause(0);
-        tl.restart();
+        /* activeAction = actions['Idle'];
+        activeAction.play(); */
     }
 
     if (keyAIsDown) {
-        ry += 5;
-        gsap.to(figure.params, { ry: degreesToRadians(ry), onUpdate: () => figure.bounce() });
+        ry += 0.1;
+        gsap.to(figure.params, { ry: ry });
     }
 
     if (keyDIsDown) {
-        ry -= 5;
-        gsap.to(figure.params, { ry: degreesToRadians(ry), onUpdate: () => figure.bounce() });
+        ry -= 0.1;
+        gsap.to(figure.params, { ry: ry });
     }
-
+    
     if (keyWIsDown) {
         x = x + walkSpeed * Math.sin(figure.params.ry);
         z = z + walkSpeed * Math.cos(figure.params.ry);
+        gsap.to(figure.params, { x: x, z: z});
+        figure.fadeToAction("Running", 0.25);
     }
-
-    if (keySIsDown) {
+    else if (keySIsDown) {
         x = x - walkSpeed * Math.sin(figure.params.ry);
         z = z - walkSpeed * Math.cos(figure.params.ry);
-        gsap.to(figure.params, { x: x, z: z, onUpdate: () => figure.walkSpeed() });
-
-        if (!isAnimatingWalk) {
-            isAnimatingWalk = true;
-            tl.pause(0);
-            tl2.restart();
-        }
+        gsap.to(figure.params, { x: x, z: z});
+        figure.fadeToAction("Running", 0.25);
     }
-
-    if (keyEIsDown) {
-        console.log('test');
+    else if (keyEIsDown) {
+        figure.fadeToAction("Dance", 0.25);
     }
-
-    // console.log(api.state);
-    console.log(figure.params.x);
+    else if (keyQIsDown) {
+        figure.fadeToAction("Sitting", 0.25);
+    }
+    else {
+        figure.fadeToAction("Idle", 0.25);
+    }
     
+    // positionnement
+    const localCameraPosition = new THREE.Vector3(-15, 5, -25);
+    figure.localToWorld(localCameraPosition);
+    camera.position.copy(localCameraPosition);
+
+    // quoi regarder
+    camera.lookAt(new THREE.Vector3(figure.position.x, 5, figure.position.z));
+    
+    // maj des matrices
+    camera.updateProjectionMatrix();
+
+
     const dt = clock.getDelta();
-    if (mixer) mixer.update(dt);
+    figure.update(dt);
     controls.update();
     stats.update();
     render();
