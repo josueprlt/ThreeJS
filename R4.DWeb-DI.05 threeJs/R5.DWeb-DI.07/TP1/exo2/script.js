@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 
 let container, clock, mixer, gui, actions, activeAction, previousAction;
@@ -82,10 +81,6 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.render(scene, camera);
 });
-
-// Orbit Controls
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
 
 // Material
 const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -326,7 +321,7 @@ gsap.ticker.add(() => {
     }
     
     // positionnement
-    const localCameraPosition = new THREE.Vector3(-15, 5, -25);
+    const localCameraPosition = new THREE.Vector3(0, 5, -10);
     figure.localToWorld(localCameraPosition);
     camera.position.copy(localCameraPosition);
 
@@ -339,7 +334,6 @@ gsap.ticker.add(() => {
 
     const dt = clock.getDelta();
     figure.update(dt);
-    controls.update();
     stats.update();
     render();
 });
