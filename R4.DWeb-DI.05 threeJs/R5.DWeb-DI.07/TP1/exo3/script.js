@@ -5,6 +5,9 @@ import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
 
 let container, clock, mixer, gui, actions, activeAction, previousAction;
 let model, face;
@@ -190,6 +193,34 @@ class Figure extends THREE.Group {
 const figure = new Figure();
 scene.add(figure);
 
+
+let text = null;
+const fontLoader = new FontLoader();
+const myFont = "./helvetiker_regular.typeface.json";
+const textMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 })
+
+function createText(count) {
+    scene.remove(text);
+    fontLoader.load(myFont, (font) => {
+        const textGeometry = new TextGeometry('Shots: ' + count, {
+            font: font,
+            size: 1,
+            height: 0.2,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.03,
+            bevelSize: 0.02,
+            bevelOffset: 0,
+            bevelSegments: 5
+        })
+        text = new THREE.Mesh(textGeometry, textMaterial);
+        text.position.set(0, 2, 0);
+        scene.add(text);
+    })
+}
+
+createText(0);
+
 // Helpers
 let DirectionalLightHelper = new THREE.DirectionalLightHelper(light);
 let GridHelper = new THREE.GridHelper(40, 100);
@@ -203,7 +234,6 @@ scene.add(GridHelper);
 
 
 var isAnimating = false;
-var isAnimatingWalk = false;
 var ry = 0;
 var x = 0;
 var z = 0;
@@ -284,7 +314,11 @@ window.addEventListener("keydown", (event) => {
 gsap.ticker.add(() => {
 
     if (keySpaceIsDown && !isAnimating) {
+        isAnimating = true;
         figure.fadeToAction("Jump", 0.25)
+        setTimeout(() => {
+            isAnimating = false;
+        }, 1000);
     }
 
     if (keyAIsDown) {
@@ -318,15 +352,23 @@ gsap.ticker.add(() => {
     else {
         figure.fadeToAction("Idle", 0.25);
     }
+
+
+    if (text) {
+        const localTextPosition = new THREE.Vector3(-2, 5, -10);
+        const textPosition = camera.localToWorld(localTextPosition);
+        text.lookAt(camera.position);
+        text.position.copy(textPosition);
+    }
     
     // positionnement
-    const localCameraPosition = new THREE.Vector3(0, 5, -10);
-    figure.localToWorld(localCameraPosition);
-    camera.position.copy(localCameraPosition);
+    const localCameraPositionCam = new THREE.Vector3(0, 5, -10);
+    const localCam = figure.localToWorld(localCameraPositionCam);
+    camera.position.copy(localCam);
 
     // quoi regarder
     camera.lookAt(new THREE.Vector3(figure.position.x, 5, figure.position.z));
-    
+
     // maj des matrices
     camera.updateProjectionMatrix();
 
