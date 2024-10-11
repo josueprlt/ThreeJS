@@ -3,13 +3,15 @@ import * as THREE from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import Mass from "./Mass.js";
+import Spring from "./Spring.js";
 
 // Pour créer l’affichage en haut à droite
 const stats = new Stats()
 document.body.appendChild(stats.dom)
 
 const scene = new THREE.Scene()
-scene.fog = new THREE.Fog(0xe0e0e0, 10, 45);
+// scene.fog = new THREE.Fog(0xe0e0e0, 10, 45);
 scene.background = new THREE.Color(0xe0e0e0);
 
 const degreesToRadians = (degrees) => {
@@ -46,7 +48,7 @@ scene.add(plane);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000);
-camera.position.set(0, 5, 10);
+camera.position.set(10, 10, 15);
 camera.lookAt(0, 0, 0);
 scene.add(camera);
 
@@ -79,25 +81,15 @@ window.addEventListener('resize', () => {
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 
-// Material
-const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
-
 // Lighting
 const lightAmbient = new THREE.AmbientLight(0x9eaeff, 0.5);
 scene.add(lightAmbient);
 
 let light = new THREE.DirectionalLight(0xFFFFFF, 1);
-light.position.set(50, 100, 50);
+light.position.set(0, 40, 0);
 light.target.position.set(0, 0, 0);
 light.castShadow = true;
 scene.add(light);
-
-light.shadow.mapSize.width = 512;
-light.shadow.mapSize.height = 512;
-light.shadow.camera.near = 0.5;
-light.shadow.camera.far = 500;
-
-light.position.set(5, 5, 5);
 
 // Helpers
 let DirectionalLightHelper = new THREE.DirectionalLightHelper(light);
@@ -133,12 +125,58 @@ const indices = [
 geometry.setIndex(indices);
 geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-const mat = new THREE.MeshPhongMaterial({ color: 0x156213, emissive: 0x000000 });
+const mat = new THREE.MeshPhongMaterial({ color: 0x156213, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true });
 
 let mesh = new THREE.Mesh(geometry, mat);
 mesh.castShadow = true;
+scene.add(mesh);
+
+let masses = [];
+for (let i = 0; i < vertices.length; i+=3) {
+    masses.push(new Mass(vertices[i], vertices[i+1], vertices[i+2]));
+}
+
+let springs = [];
+for (let i = 0; i < masses.length; i++) {
+    for (let j = i + 1; j < masses.length; j++) {
+        springs.push(new Spring(masses[i], masses[j]));
+    }
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === ' ') {
+        let dir = new THREE.Vector3(Math.random() * 10 - 5, 10.0, Math.random() * 10 - 5);
+        for (const m of masses) {
+            m.velocity.add(dir);
+        }
+    }
+});
+
 
 gsap.ticker.add(() => {
+
+    for (const m of masses) {
+        m.updatePosition();
+    }
+
+    for (const s of springs) {
+        s.applyConstraint();
+    }
+
+    /* for (const s of springs) {
+        s.avoidExchange();
+    } */
+
+    let vertices = geometry.getAttribute('position').array;
+    for (let i = 0; i < masses.length; i++) {
+        vertices[i * 3] = masses[i].position.x;
+        vertices[i * 3 + 1] = masses[i].position.y;
+        vertices[i * 3 + 2] = masses[i].position.z;
+    }
+    
+
+    geometry.computeVertexNormals();
+    geometry.getAttribute('position').needsUpdate = true;
 
     controls.update();
     stats.update();
