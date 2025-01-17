@@ -9,9 +9,46 @@ let label = "";
 let confidence = "";
 
 function preload() {
-  classifier = ml5.imageClassifier("MobileNet");
-  img = loadImage("ecureuil.jpg");
+  classifier = ml5.imageClassifier("DarkNet");
+  img = loadImage("images/dragon.avif");
 }
+
+
+// function setup() {
+//   createCanvas(400, 400);
+
+//   // Paramètres de la caméra
+//   let constraints = {
+//     audio: false,
+//     video: {
+//       facingMode: "environment" // Caméra arrière par défaut
+//     }
+//   };
+
+//   // Essayons d'accéder à la caméra arrière, et on bascule si nécessaire
+//   capture = createCapture(constraints, function (stream) {
+//     console.log("Caméra initialisée !");
+//   });
+
+//   // Si la caméra arrière n'existe pas, on bascule vers la caméra frontale
+//   capture.elt.onloadedmetadata = function () {
+//     if (!capture.elt.srcObject) {
+//       constraints.video.facingMode = "user";
+//       capture = createCapture(constraints);
+//     }
+//   };
+
+//   capture.size(displayWidth, displayHeight);
+//   capture.hide();
+
+//   classifier.classify(capture, gotResult);
+//   image(capture, 0, 0, width, height);
+// }
+
+// function draw() {
+//   image(capture, 0, 0, width, height);
+// }
+
 
 function setup() {
   createCanvas(400, 400);
