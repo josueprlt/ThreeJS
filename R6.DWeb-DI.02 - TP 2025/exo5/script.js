@@ -1,60 +1,60 @@
-// Classifier Variable
-let classifier;
-// Model URL
-let imageModelURL = 'https://teachablemachine.withgoogle.com/models/bXy2kDNi/';
+// Initialize the Image Classifier method with MobileNet. A callback needs to be passed.
+let objectDetector;
+let objects = [];
+let detecting = false;
+let img = null;
 
-// Video
-let video;
-let flippedVideo;
-// To store the classification
-let label = "";
 
-// Load the model first
+
 function preload() {
-  classifier = ml5.imageClassifier(imageModelURL + 'model.json');
+  img = loadImage('images/ikea2.avif');
+  objectDetector = ml5.objectDetector('cocossd', modelReady);
+}
+
+function modelReady() {
+  detecting = true;
+  console.log('Model is ready!!!');
 }
 
 function setup() {
-  createCanvas(320, 260);
-  // Create the video
-  video = createCapture(VIDEO);
-  video.size(320, 260);
-  video.hide();
-
-  flippedVideo = video;
-  // Start classifying
-  classifyVideo();
+  createCanvas(img.width, img.height);
 }
 
-function draw() {
-  background(0);
-  // Draw the video
-  image(flippedVideo, 0, 0);
-
-  // Draw the label
-  fill(255);
-  textSize(16);
-  textAlign(CENTER);
-  text(label, width / 2, height - 4);
-}
-
-// Get a prediction for the current video frame
-function classifyVideo() {
-  flippedVideo = video;
-  classifier.classify(flippedVideo, gotResult);
-  flippedVideo.remove();
-}
-
-// When we get a result
+// A function to run when we get any errors and the results
 function gotResult(error, results) {
-  // If there is an error
+  // Display error in the console
   if (error) {
     console.error(error);
+  } else {
+    // The results are in an array ordered by confidence.
+    console.log(results);
+    objects = results;
+  }
+}
+
+
+function draw() {
+  image(img, 0, 0)
+  if (!detecting) {
     return;
   }
-  // The results are in an array ordered by confidence.
-  // console.log(results[0]);
-  label = results[0].label;
-  // Classifiy again!
-  classifyVideo();
+  if (img != null) {
+    objectDetector.detect(img, gotResult);
+  }
+  else {
+    background(0);
+  }
+
+  for (let object of objects) {
+    noFill();
+    stroke(0, 255, 0);
+    strokeWeight(2);
+    rect(object.x, object.y, object.width, object.height);
+    noStroke();
+    fill(255);
+    textSize(20);
+    text(object.label, object.x + 10, object.y + 20);
+    textSize(16);
+    text((object.confidence * 100).toFixed(2) + '%', object.x + 10, object.y + 40);
+  }
 }
