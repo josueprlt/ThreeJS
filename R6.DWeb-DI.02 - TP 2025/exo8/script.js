@@ -5,6 +5,9 @@ let confidence = "training...";
 let handPose;
 let video;
 let hands = [];
+let rockState = 0;
+let paperState = 0;
+let scissorState = 0;
 let rockButton, paperButton, scissorsButton, trainButton, saveButton, loadButton;
 
 function preload() {
@@ -30,15 +33,15 @@ function setup() {
   handPose.detectStart(video, gotHands);
 
   // Create buttons for training
-  rockButton = createButton('Rock');
+  rockButton = createButton(`Rock: ${rockState}`);
   rockButton.position(10, height + 10);
   rockButton.mousePressed(() => addData('rock'));
 
-  paperButton = createButton('Paper');
+  paperButton = createButton(`Paper: ${paperState}`);
   paperButton.position(70, height + 10);
   paperButton.mousePressed(() => addData('paper'));
 
-  scissorsButton = createButton('Scissors');
+  scissorsButton = createButton(`Scissors: ${scissorState}`);
   scissorsButton.position(140, height + 10);
   scissorsButton.mousePressed(() => addData('scissors'));
 
@@ -86,6 +89,16 @@ function addData(gesture) {
     let inputs = hand.keypoints.map(p => [p.x, p.y]).flat();
     classifier.addData(inputs, [gesture]);
     console.log(`Added data for ${gesture}`);
+    if (gesture === 'rock') {
+      rockState++;
+      rockButton.html(`Rock: ${rockState}`);
+    } else if (gesture === 'paper') {
+      paperState++;
+      paperButton.html(`Paper: ${paperState}`);
+    } else if (gesture === 'scissors') {
+      scissorState++;
+      scissorsButton.html(`Scissors: ${scissorState}`);
+    }
   }
 }
 
